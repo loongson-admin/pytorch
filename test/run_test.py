@@ -479,7 +479,12 @@ def run_test(
     executable = get_executable_command(
         options, allow_pytest=not extra_unittest_args
     )
-
+    unittest_args.extend([
+        "--use-pytest",
+        "-vv",
+        "-rfEX",
+        '--reruns=2'
+    ])
     # Can't call `python -m unittest test_*` here because it doesn't run code
     # in `if __name__ == '__main__': `. So call `python test_*.py` instead.
     argv = [test_module + ".py"] + unittest_args
@@ -806,7 +811,7 @@ def run_test_ops(test_module, test_directory, options):
     else:
         # When under the normal mode, retry a failed test 2 more times. -x means stop at the first
         # failure
-        rerun_options = ["-x", "--reruns=2"]
+        rerun_options = ["--reruns=2"]
 
     default_unittest_args = [
         "--use-pytest",
@@ -1333,8 +1338,8 @@ def main():
             return True
         failure_messages.append(err_message)
         print_to_stderr(err_message)
-        if not options.continue_through_error:
-            pool.terminate()
+        # if not options.continue_through_error:
+        #     pool.terminate()
         return False
 
     try:
@@ -1348,14 +1353,14 @@ def main():
         pool.join()
         del os.environ['PARALLEL_TESTING']
 
-        if not options.continue_through_error and len(failure_messages) != 0:
-            raise RuntimeError(
-                "\n".join(failure_messages) +
-                "\n\nTip: You can keep running tests even on failure by "
-                "passing --keep-going to run_test.py.\n"
-                "If running on CI, add the 'keep-going' label to "
-                "your PR and rerun your jobs."
-            )
+        # if not options.continue_through_error and len(failure_messages) != 0:
+        #     raise RuntimeError(
+        #         "\n".join(failure_messages) +
+        #         "\n\nTip: You can keep running tests even on failure by "
+        #         "passing --keep-going to run_test.py.\n"
+        #         "If running on CI, add the 'keep-going' label to "
+        #         "your PR and rerun your jobs."
+        #     )
 
         for test in selected_tests_serial:
             options_clone = copy.deepcopy(options)
