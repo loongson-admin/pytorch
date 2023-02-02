@@ -1,3 +1,4 @@
+from types import MethodType
 from _pytest.junitxml import LogXML, _NodeReporter, bin_xml_escape
 from _pytest.terminal import _get_raw_skip_reason
 from _pytest.stash import StashKey
@@ -11,6 +12,8 @@ from typing import Optional
 import xml.etree.ElementTree as ET
 import functools
 import pytest
+import sys
+from _pytest.python import Module
 
 # a lot of this file is copied from _pytest.junitxml and modified to get rerun info
 
@@ -167,3 +170,9 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
                     terminalreporter._outrep_summary(rep)
                     terminalreporter._handle_teardown_sections(rep.nodeid)
     yield
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_pycollect_makemodule(module_path, path, parent) -> Module:
+    mod = Module.from_parent(parent, path=module_path)
+    mod._getobj = MethodType(lambda x: sys.modules['__main__'], mod)
+    return mod
