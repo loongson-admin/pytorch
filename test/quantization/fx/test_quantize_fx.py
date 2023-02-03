@@ -5139,6 +5139,8 @@ class TestQuantizeFx(QuantizationTestCase):
         del _DEFAULT_QUANTIZATION_PATTERNS["dummy_quant"]
         del _DEFAULT_QUANTIZATION_PATTERNS["dummy_quant2"]
         del _DEFAULT_QUANTIZATION_PATTERNS["dummy_quant3"]
+        del _DEFAULT_OUTPUT_OBSERVER_MAP["dummy_quant2"]
+        del _DEFAULT_OUTPUT_OBSERVER_MAP["dummy_quant3"]
         del _DEFAULT_OUTPUT_FAKE_QUANTIZE_MAP["dummy_quant2"]
         del _DEFAULT_OUTPUT_FAKE_QUANTIZE_MAP["dummy_quant3"]
 
