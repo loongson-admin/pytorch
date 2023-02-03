@@ -5103,6 +5103,10 @@ class TestQuantizeFx(QuantizationTestCase):
     def _assertFixedQParamsFakeQuantizeEqual(self, fq1, fq2):
         self.assertEqual(fq1()._observer_ctr, fq2()._observer_ctr)
 
+    @unittest.mock.patch('torch.ao.quantization.fx.pattern_utils._DEFAULT_FUSION_PATTERNS', {})
+    @unittest.mock.patch('torch.ao.quantization.fx.pattern_utils._DEFAULT_QUANTIZATION_PATTERNS', {})
+    @unittest.mock.patch('torch.ao.quantization.fx.pattern_utils._DEFAULT_OUTPUT_FAKE_QUANTIZE_MAP', {})
+    @unittest.mock.patch('torch.ao.quantization.fx.pattern_utils._DEFAULT_OUTPUT_OBSERVER_MAP', {})
     def test_register_patterns(self):
         @_register_fusion_pattern("dummy_fusion")
         class DummyFusion():
