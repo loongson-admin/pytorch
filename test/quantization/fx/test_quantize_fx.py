@@ -5103,10 +5103,6 @@ class TestQuantizeFx(QuantizationTestCase):
     def _assertFixedQParamsFakeQuantizeEqual(self, fq1, fq2):
         self.assertEqual(fq1()._observer_ctr, fq2()._observer_ctr)
 
-    @unittest.mock.patch('torch.ao.quantization.fx.pattern_utils._DEFAULT_FUSION_PATTERNS', {})
-    @unittest.mock.patch('torch.ao.quantization.fx.pattern_utils._DEFAULT_QUANTIZATION_PATTERNS', {})
-    @unittest.mock.patch('torch.ao.quantization.fx.pattern_utils._DEFAULT_OUTPUT_FAKE_QUANTIZE_MAP', {})
-    @unittest.mock.patch('torch.ao.quantization.fx.pattern_utils._DEFAULT_OUTPUT_OBSERVER_MAP', {})
     def test_register_patterns(self):
         @_register_fusion_pattern("dummy_fusion")
         class DummyFusion():
@@ -5139,8 +5135,12 @@ class TestQuantizeFx(QuantizationTestCase):
         self.assertEqual(output_observer_map.get("dummy_quant3"), default_fixed_qparams_range_neg1to1_observer)
         self._assertFixedQParamsFakeQuantizeEqual(output_fake_quantize_map.get("dummy_quant3"),
                                                   default_fixed_qparams_range_neg1to1_fake_quant)
-
-
+        del _DEFAULT_FUSION_PATTERNS["dummy_fusion"]
+        del _DEFAULT_QUANTIZATION_PATTERNS["dummy_fusion"]
+        del _DEFAULT_QUANTIZATION_PATTERNS["dummy_fusion2"]
+        del _DEFAULT_QUANTIZATION_PATTERNS["dummy_fusion3"]
+        del _DEFAULT_OUTPUT_FAKE_QUANTIZE_MAP["dummy_fusion2"]
+        del _DEFAULT_OUTPUT_FAKE_QUANTIZE_MAP["dummy_fusion3"]
 
     def test_reuse_input_qconfig(self):
         class M1(torch.nn.Module):
