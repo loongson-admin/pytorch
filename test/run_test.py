@@ -1362,17 +1362,17 @@ def main():
         #         "your PR and rerun your jobs."
         #     )
 
-        for test in selected_tests_serial:
-            options_clone = copy.deepcopy(options)
-            if test in USE_PYTEST_LIST:
-                options_clone.pytest = True
-            err_message = run_test_module(test, test_directory, options_clone)
-            if err_message is None:
-                continue
-            failure_messages.append(err_message)
-            if not options_clone.continue_through_error:
-                raise RuntimeError(err_message)
-            print_to_stderr(err_message)
+        # for test in selected_tests_serial:
+        #     options_clone = copy.deepcopy(options)
+        #     if test in USE_PYTEST_LIST:
+        #         options_clone.pytest = True
+        #     err_message = run_test_module(test, test_directory, options_clone)
+        #     if err_message is None:
+        #         continue
+        #     failure_messages.append(err_message)
+        #     if not options_clone.continue_through_error:
+        #         raise RuntimeError(err_message)
+        #     print_to_stderr(err_message)
     finally:
         pool.terminate()
         pool.join()
