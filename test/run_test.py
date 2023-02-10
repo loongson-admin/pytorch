@@ -1343,15 +1343,15 @@ def main():
         return False
 
     try:
-        # os.environ['PARALLEL_TESTING'] = '1'
-        # for test in selected_tests_parallel:
-        #     options_clone = copy.deepcopy(options)
-        #     if test in USE_PYTEST_LIST:
-        #         options_clone.pytest = True
-        #     pool.apply_async(run_test_module, args=(test, test_directory, options_clone), callback=success_callback)
-        # pool.close()
-        # pool.join()
-        # del os.environ['PARALLEL_TESTING']
+        os.environ['PARALLEL_TESTING'] = '1'
+        for test in selected_tests_parallel:
+            options_clone = copy.deepcopy(options)
+            if test in USE_PYTEST_LIST:
+                options_clone.pytest = True
+            pool.apply_async(run_test_module, args=(test, test_directory, options_clone), callback=success_callback)
+        pool.close()
+        pool.join()
+        del os.environ['PARALLEL_TESTING']
 
         # if not options.continue_through_error and len(failure_messages) != 0:
         #     raise RuntimeError(
