@@ -792,14 +792,12 @@ def run_tests(argv=UNITTEST_ARGS):
             test_report_path = get_report_path(pytest=True)
             print(f'Test results will be stored in {test_report_path}')
             extra_args.append(f"--junit-xml-reruns={test_report_path}")
+        if PYTEST_SINGLE_TEST:
+            argv = PYTEST_SINGLE_TEST + argv[1:]
 
         import pytest
         os.environ["NO_COLOR"] = "1"
-        os.environ["USING_PYTEST"] = "1"
-        if PYTEST_SINGLE_TEST:
-            argv = PYTEST_SINGLE_TEST + argv[1:]
         exit_code = pytest.main(args=argv + extra_args)
-        del os.environ["USING_PYTEST"]
         if TEST_SAVE_XML:
             sanitize_pytest_xml(test_report_path)
         print("If in CI, skip info is located in the xml test reports, please either go to s3 or the hud to download them")
