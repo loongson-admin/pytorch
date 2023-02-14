@@ -1,4 +1,4 @@
-# Owner(s): ["oncall: package.deploy"]
+# Owner(s): ["oncall: package/deploy"]
 
 from package.test_resources import TestResources  # noqa: F401
 from package.test_model import ModelTest  # noqa: F401
