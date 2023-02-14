@@ -751,7 +751,7 @@ def run_tests(argv=UNITTEST_ARGS):
             cmd = (
                 [sys.executable] + [argv[0]] + other_args + argv[1:] +
                 (["--pytest-single-test"] if USE_PYTEST else []) +
-                test_case_full_name
+                [test_case_full_name]
             )
             string_cmd = " ".join(cmd)
 

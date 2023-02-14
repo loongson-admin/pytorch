@@ -9,7 +9,6 @@
 
 import json
 import logging
-import unittest
 from dataclasses import asdict
 from unittest.mock import patch
 
