@@ -15,7 +15,6 @@ import tempfile
 import json
 import glob
 from typing import Dict, Optional, List, Union, cast, Any
-from tools.testing.test_selections import ShardedTest
 
 import torch
 from torch.utils import cpp_extension
@@ -41,7 +40,8 @@ try:
         get_reordered_tests,
         get_test_case_configs,
         calculate_shards,
-        NUM_PROCS
+        NUM_PROCS,
+        ShardedTest,
     )
     HAVE_TEST_SELECTION_TOOLS = True
 except ImportError:
