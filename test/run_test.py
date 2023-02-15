@@ -1310,7 +1310,7 @@ def main():
     selected_tests = get_selected_tests(options)
 
     if options.verbose:
-        print_to_stderr("Selected tests:\n {}".format("\n ".join(selected_tests)))
+        print_to_stderr("Selected tests:\n {}".format("\n ".join(str(x) for x in selected_tests)))
 
     if options.dry_run:
         return
