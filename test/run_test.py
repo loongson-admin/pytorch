@@ -456,6 +456,11 @@ def run_test(
 ) -> int:
     maybe_set_hip_visible_devies()
     unittest_args = options.additional_unittest_args.copy()
+
+    if isinstance(test_module, ShardedTest):
+        unittest_args.extend([f"--shard-id={test_module.shard}", f"--num-shards={test_module.num_shards}"])
+        test_module = test_module.name
+
     if options.verbose:
         unittest_args.append(f'-{"v"*options.verbose}')  # in case of pytest
     if test_module in RUN_PARALLEL_BLOCKLIST:
@@ -598,8 +603,8 @@ def test_distributed(test_module, test_directory, options):
         which_shard = num_shards = 1
     # Round-robin all backends to different shards
     backend_to_shard = {backend: i % num_shards + 1
-                        for i, backend in enumerate(DISTRIBUTED_TESTS_WITH_MULTIPLE_BACKENDS[test_module])}
-    print_to_stderr(f"Map different backends to different shards for {test_module}: {backend_to_shard}")
+                        for i, backend in enumerate(DISTRIBUTED_TESTS_WITH_MULTIPLE_BACKENDS[str(test_module)])}
+    print_to_stderr(f"Map different backends to different shards for {str(test_module)}: {backend_to_shard}")
 
     config = DISTRIBUTED_TESTS_CONFIG
     for backend, env_vars in config.items():
@@ -629,7 +634,7 @@ def test_distributed(test_module, test_directory, options):
             os.environ["INIT_METHOD"] = "env://"
             os.environ.update(env_vars)
             if with_init_file:
-                if test_module == "test_distributed_spawn":
+                if str(test_module) == "test_distributed_spawn":
                     init_method = f"{FILE_SCHEMA}{tmp_dir}/"
                 else:
                     init_method = f"{FILE_SCHEMA}{tmp_dir}/shared_init_file"
@@ -1279,22 +1284,20 @@ def get_selected_tests(options):
     return selected_tests
 
 
-def run_test_module(test: str, test_directory: str, options) -> Optional[str]:
+def run_test_module(test: Union[str, ShardedTest], test_directory: str, options) -> Optional[str]:
     maybe_set_hip_visible_devies()
 
-    test_module = parse_test_module(test)
-
     # Printing the date here can help diagnose which tests are slow
-    print_to_stderr("Running {} ... [{}]".format(test, datetime.now()))
-    handler = CUSTOM_HANDLERS.get(test_module, run_test)
-    return_code = handler(test_module, test_directory, options)
+    print_to_stderr("Running {} ... [{}]".format(str(test), datetime.now()))
+    handler = CUSTOM_HANDLERS.get(test, run_test)
+    return_code = handler(test, test_directory, options)
     assert isinstance(return_code, int) and not isinstance(
         return_code, bool
-    ), f"While running {test} got non integer return code {return_code}"
+    ), f"While running {str(test)} got non integer return code {return_code}"
     if return_code == 0:
         return None
 
-    message = f"{test} failed!"
+    message = f"{str(test)} failed!"
     if return_code < 0:
         # subprocess.Popen returns the child process' exit signal as
         # return code -N, where N is the signal number.
@@ -1349,10 +1352,6 @@ def main():
         os.environ['PARALLEL_TESTING'] = '1'
         for test in selected_tests_parallel:
             options_clone = copy.deepcopy(options)
-            name = test
-            if isinstance(test, ShardedTest):
-                name = test.name
-                options_clone = options_clone + [f"--shard-id={test.shard}", f"--num-shards={test.num_shards}"]
             pool.apply_async(run_test_module, args=(name, test_directory, options_clone), callback=success_callback)
         pool.close()
         pool.join()
@@ -1370,9 +1369,6 @@ def main():
         for test in selected_tests_serial:
             options_clone = copy.deepcopy(options)
             name = test
-            if isinstance(test, ShardedTest):
-                name = test.name
-                options_clone = options_clone + [f"--shard-id={test.shard}", f"--num-shards={test.num_shards}"]
             err_message = run_test_module(test, test_directory, options_clone)
             if err_message is None:
                 continue
