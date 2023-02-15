@@ -14,7 +14,8 @@ import sys
 import tempfile
 import json
 import glob
-from typing import Dict, Optional, List, cast, Any
+from typing import Dict, Optional, List, Union, cast, Any
+from tools.testing.test_selections import ShardedTest
 
 import torch
 from torch.utils import cpp_extension
@@ -894,15 +895,15 @@ CUSTOM_HANDLERS = {
     "distributed/rpc/test_share_memory": get_run_test_with_subprocess_fn(),
     "distributed/rpc/cuda/test_tensorpipe_agent": get_run_test_with_subprocess_fn(),
     "doctests": run_doctests,
-    "inductor/test_torchinductor_opinfo": run_test_ops,
-    "test_ops": run_test_ops,
-    "test_ops_gradients": run_test_ops,
-    "test_ops_fwd_gradients": run_test_ops,
-    "test_ops_jit": run_test_ops,
-    "functorch/test_ops": run_test_ops,
-    # not a test_ops file, but takes 2 hrs on some architectures and
-    # run_test_ops is good at parallelizing things
-    "test_decomp": run_test_ops,
+    # "inductor/test_torchinductor_opinfo": run_test_ops,
+    # "test_ops": run_test_ops,
+    # "test_ops_gradients": run_test_ops,
+    # "test_ops_fwd_gradients": run_test_ops,
+    # "test_ops_jit": run_test_ops,
+    # "functorch/test_ops": run_test_ops,
+    # # not a test_ops file, but takes 2 hrs on some architectures and
+    # # run_test_ops is good at parallelizing things
+    # "test_decomp": run_test_ops,
 }
 
 
@@ -1128,7 +1129,9 @@ def exclude_tests(exclude_list, selected_tests, exclude_message=None, exact_matc
     return selected_tests
 
 
-def must_serial(file: str) -> bool:
+def must_serial(file: Union[str, ShardedTest]) -> bool:
+    if isinstance(file, ShardedTest):
+        file = file.name
     return (
         os.getenv("PYTORCH_TEST_RUN_EVERYTHING_IN_SERIAL", "0") == "1" or
         "distributed" in os.getenv("TEST_CONFIG", "") or
@@ -1217,6 +1220,26 @@ def get_selected_tests(options):
     elif TEST_WITH_ROCM:
         selected_tests = exclude_tests(ROCM_BLOCKLIST, selected_tests, "on ROCm")
 
+    # skip all distributed tests if distributed package is not available.
+    if not dist.is_available():
+        selected_tests = exclude_tests(DISTRIBUTED_TESTS, selected_tests,
+                                       "PyTorch is built without distributed support.")
+
+    # skip tests that require LAPACK when it's not available
+    if not torch._C.has_lapack:
+        selected_tests = exclude_tests(TESTS_REQUIRING_LAPACK, selected_tests,
+                                       "PyTorch is built without LAPACK support.")
+
+    if is_slow_gradcheck_env():
+        selected_tests = exclude_tests(TESTS_NOT_USING_GRADCHECK, selected_tests,
+                                       "Running in slow gradcheck mode, skipping tests "
+                                       "that don't use gradcheck.", exact_match=True)
+
+    if options.distributed_tests:
+        # Run distributed tests with multiple backends across all shards, one per backend
+        selected_tests.extend(DISTRIBUTED_TESTS_WITH_MULTIPLE_BACKENDS.keys())
+        selected_tests.reverse()
+
     # sharding
     if options.shard:
         assert len(options.shard) == 2, "Unexpected shard format"
@@ -1252,26 +1275,6 @@ def get_selected_tests(options):
                                       must_serial=must_serial)
             _, tests_from_shard = shards[which_shard - 1]
             selected_tests = tests_from_shard
-
-    # skip all distributed tests if distributed package is not available.
-    if not dist.is_available():
-        selected_tests = exclude_tests(DISTRIBUTED_TESTS, selected_tests,
-                                       "PyTorch is built without distributed support.")
-
-    # skip tests that require LAPACK when it's not available
-    if not torch._C.has_lapack:
-        selected_tests = exclude_tests(TESTS_REQUIRING_LAPACK, selected_tests,
-                                       "PyTorch is built without LAPACK support.")
-
-    if is_slow_gradcheck_env():
-        selected_tests = exclude_tests(TESTS_NOT_USING_GRADCHECK, selected_tests,
-                                       "Running in slow gradcheck mode, skipping tests "
-                                       "that don't use gradcheck.", exact_match=True)
-
-    if options.distributed_tests:
-        # Run distributed tests with multiple backends across all shards, one per backend
-        selected_tests.extend(DISTRIBUTED_TESTS_WITH_MULTIPLE_BACKENDS.keys())
-        selected_tests.reverse()
 
     return selected_tests
 
@@ -1346,9 +1349,11 @@ def main():
         os.environ['PARALLEL_TESTING'] = '1'
         for test in selected_tests_parallel:
             options_clone = copy.deepcopy(options)
-            if test in USE_PYTEST_LIST:
-                options_clone.pytest = True
-            pool.apply_async(run_test_module, args=(test, test_directory, options_clone), callback=success_callback)
+            name = test
+            if isinstance(test, ShardedTest):
+                name = test.name
+                options_clone = options_clone + [f"--shard-id={test.shard}", f"--num-shards={test.num_shards}"]
+            pool.apply_async(run_test_module, args=(name, test_directory, options_clone), callback=success_callback)
         pool.close()
         pool.join()
         del os.environ['PARALLEL_TESTING']
@@ -1364,8 +1369,10 @@ def main():
 
         for test in selected_tests_serial:
             options_clone = copy.deepcopy(options)
-            if test in USE_PYTEST_LIST:
-                options_clone.pytest = True
+            name = test
+            if isinstance(test, ShardedTest):
+                name = test.name
+                options_clone = options_clone + [f"--shard-id={test.shard}", f"--num-shards={test.num_shards}"]
             err_message = run_test_module(test, test_directory, options_clone)
             if err_message is None:
                 continue
