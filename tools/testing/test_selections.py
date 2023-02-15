@@ -37,6 +37,11 @@ class ShardedTest(NamedTuple):
     num_shards: int
     time: float
 
+    def __str__(self) -> str:
+        if self.num_shards == 1:
+            return self.name
+        return f"{self.name} {self.shard}/{self.num_shards}"
+
 
 class ShardJob:
     def __init__(self, test_times: Dict[str, float]):
