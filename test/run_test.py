@@ -458,7 +458,7 @@ def run_test(
     unittest_args = options.additional_unittest_args.copy()
 
     if isinstance(test_module, ShardedTest):
-        unittest_args.extend([f"--shard-id={test_module.shard}", f"--num-shards={test_module.num_shards}"])
+        unittest_args.extend([f"--shard-id={test_module.shard - 1}", f"--num-shards={test_module.num_shards}"])
         test_module = test_module.name
 
     if options.verbose:
