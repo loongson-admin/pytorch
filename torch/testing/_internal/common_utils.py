@@ -787,7 +787,7 @@ def run_tests(argv=UNITTEST_ARGS):
             failed |= wait_for_process(p) != 0
         assert not failed, "Some test shards have failed"
     elif USE_PYTEST:
-        extra_args = ["--use-main-module", "-p", "no:xdist"]
+        extra_args = ["--use-main-module"]
         # xdist creates extra thread which causes test_source_multithreading in test_profiler to fail
         if TEST_SAVE_XML:
             test_report_path = get_report_path(pytest=True)
