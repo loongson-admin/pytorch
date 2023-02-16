@@ -1289,7 +1289,7 @@ def run_test_module(test: Union[str, ShardedTest], test_directory: str, options)
 
     # Printing the date here can help diagnose which tests are slow
     print_to_stderr("Running {} ... [{}]".format(str(test), datetime.now()))
-    handler = CUSTOM_HANDLERS.get(test, run_test)
+    handler = CUSTOM_HANDLERS.get(str(test), run_test)
     return_code = handler(test, test_directory, options)
     assert isinstance(return_code, int) and not isinstance(
         return_code, bool
