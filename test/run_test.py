@@ -1308,6 +1308,7 @@ def run_test_module(test: Union[str, ShardedTest], test_directory: str, options)
 
 def main():
     options = parse_args()
+    shell([sys.executable, "-m", "pip", "uninstall", "pytest-xdist"])
 
     test_directory = str(REPO_ROOT / "test")
     selected_tests = get_selected_tests(options)
