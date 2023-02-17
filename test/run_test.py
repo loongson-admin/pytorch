@@ -601,10 +601,11 @@ def test_distributed(test_module, test_directory, options):
         which_shard, num_shards = options.shard
     else:
         which_shard = num_shards = 1
+    file_name = test_module.name if isinstance(test_module, ShardedTest) else test_module
     # Round-robin all backends to different shards
     backend_to_shard = {backend: i % num_shards + 1
-                        for i, backend in enumerate(DISTRIBUTED_TESTS_WITH_MULTIPLE_BACKENDS[str(test_module)])}
-    print_to_stderr(f"Map different backends to different shards for {str(test_module)}: {backend_to_shard}")
+                        for i, backend in enumerate(DISTRIBUTED_TESTS_WITH_MULTIPLE_BACKENDS[file_name])}
+    print_to_stderr(f"Map different backends to different shards for {file_name}: {backend_to_shard}")
 
     config = DISTRIBUTED_TESTS_CONFIG
     for backend, env_vars in config.items():
@@ -634,7 +635,7 @@ def test_distributed(test_module, test_directory, options):
             os.environ["INIT_METHOD"] = "env://"
             os.environ.update(env_vars)
             if with_init_file:
-                if str(test_module) == "test_distributed_spawn":
+                if file_name == "test_distributed_spawn":
                     init_method = f"{FILE_SCHEMA}{tmp_dir}/"
                 else:
                     init_method = f"{FILE_SCHEMA}{tmp_dir}/shared_init_file"
@@ -1286,10 +1287,11 @@ def get_selected_tests(options):
 
 def run_test_module(test: Union[str, ShardedTest], test_directory: str, options) -> Optional[str]:
     maybe_set_hip_visible_devies()
+    file_name = test.name if isinstance(test, ShardedTest) else test
 
     # Printing the date here can help diagnose which tests are slow
     print_to_stderr("Running {} ... [{}]".format(str(test), datetime.now()))
-    handler = CUSTOM_HANDLERS.get(str(test), run_test)
+    handler = CUSTOM_HANDLERS.get(file_name, run_test)
     return_code = handler(test, test_directory, options)
     assert isinstance(return_code, int) and not isinstance(
         return_code, bool
