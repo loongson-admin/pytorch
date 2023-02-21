@@ -456,14 +456,14 @@ def run_test(
 ) -> int:
     maybe_set_hip_visible_devies()
     unittest_args = options.additional_unittest_args.copy()
-
+    test_file = test_module
     if isinstance(test_module, ShardedTest):
         unittest_args.extend([f"--shard-id={test_module.shard - 1}", f"--num-shards={test_module.num_shards}"])
-        test_module = test_module.name
+        test_file = test_module.name
 
     if options.verbose:
         unittest_args.append(f'-{"v"*options.verbose}')  # in case of pytest
-    if test_module in RUN_PARALLEL_BLOCKLIST:
+    if test_file in RUN_PARALLEL_BLOCKLIST:
         unittest_args = [
             arg for arg in unittest_args if not arg.startswith("--run-parallel")
         ]
@@ -497,7 +497,7 @@ def run_test(
 
     os.makedirs(REPO_ROOT / "test" / "test-reports", exist_ok=True)
     log_fd, log_path = tempfile.mkstemp(dir=REPO_ROOT / "test" / "test-reports",
-                                        prefix="{}_".format(test_module.replace("\\", "-").replace("/", "-")),
+                                        prefix="{}_".format(test_file.replace("\\", "-").replace("/", "-")),
                                         suffix=".log")
     os.close(log_fd)
     command = (launcher_cmd or []) + executable + argv
@@ -783,8 +783,9 @@ def run_doctests(test_module, test_directory, options):
     return result
 
 
-def print_log_file(test: str, file_path: str, failed: bool) -> None:
+def print_log_file(test: Union[str, ShardedTest], file_path: str, failed: bool) -> None:
     num_lines = sum(1 for _ in open(file_path, 'rb'))
+    test = str(test)
     n = 100
     with open(file_path, "r") as f:
         print_to_stderr("")
