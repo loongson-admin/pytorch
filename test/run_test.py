@@ -321,7 +321,10 @@ CI_SERIAL_LIST = [
     'test_fx',  # gets SIGKILL
     'test_dataloader',  # frequently hangs for ROCm
     'test_serialization',   # test_serialization_2gb_file allocates a tensor of 2GB, and could cause OOM
-]
+    'functorch/test_memory_efficient_fusion',  # OOM
+] + (
+    ['test_ops'] if 'slow-gradcheck' in os.getenv("BUILD_ENVIRONMENT", "") else []
+)
 
 # A subset of our TEST list that validates PyTorch's ops, modules, and autograd function as expected
 CORE_TEST_LIST = [
