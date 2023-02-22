@@ -20,6 +20,9 @@ def _awaitable_wait(aw):
     """
     return torch._C._awaitable_wait(aw)
 
+def _awaitable_then(then_func, aw):
+    return torch._C._awaitable_then(then_func, aw)
+
 def _awaitable_nowait(o):
     r"""
     Creates completed Await with specified result.
