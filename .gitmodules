@@ -106,7 +106,8 @@
 [submodule "third_party/fbgemm"]
     ignore = dirty
     path = third_party/fbgemm
-    url = https://github.com/pytorch/fbgemm
+    url = https://github.com/loongson/FBGEMM.git
+    branch = 1280f81-pytorch1.11-la
 [submodule "third_party/foxi"]
     ignore = dirty
     path = third_party/foxi

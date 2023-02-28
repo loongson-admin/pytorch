@@ -790,11 +790,11 @@ if(USE_FBGEMM)
     set(FBGEMM_SOURCE_DIR "${CAFFE2_THIRD_PARTY_ROOT}/fbgemm" CACHE STRING "FBGEMM source directory")
   endif()
   if(NOT CAFFE2_COMPILER_SUPPORTS_AVX512_EXTENSIONS)
-    message(WARNING
-      "A compiler with AVX512 support is required for FBGEMM. "
-      "Not compiling with FBGEMM. "
-      "Turn this warning off by USE_FBGEMM=OFF.")
-    set(USE_FBGEMM OFF)
+    #message(WARNING
+    #  "A compiler with AVX512 support is required for FBGEMM. "
+    #  "Not compiling with FBGEMM. "
+    #  "Turn this warning off by USE_FBGEMM=OFF.")
+    #set(USE_FBGEMM OFF)
   endif()
   if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(WARNING
@@ -813,8 +813,9 @@ if(USE_FBGEMM)
     endif()
     add_subdirectory("${FBGEMM_SOURCE_DIR}")
     set_property(TARGET fbgemm_generic PROPERTY POSITION_INDEPENDENT_CODE ON)
-    set_property(TARGET fbgemm_avx2 PROPERTY POSITION_INDEPENDENT_CODE ON)
-    set_property(TARGET fbgemm_avx512 PROPERTY POSITION_INDEPENDENT_CODE ON)
+    set_property(TARGET fbgemm_lasx PROPERTY POSITION_INDEPENDENT_CODE ON)
+    #set_property(TARGET fbgemm_avx2 PROPERTY POSITION_INDEPENDENT_CODE ON)
+    #set_property(TARGET fbgemm_avx512 PROPERTY POSITION_INDEPENDENT_CODE ON)
     set_property(TARGET fbgemm PROPERTY POSITION_INDEPENDENT_CODE ON)
   endif()
 
